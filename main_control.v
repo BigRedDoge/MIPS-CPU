@@ -1,5 +1,7 @@
-
-// Only behavior model required
+/*
+Main Control module
+Only behavior model required
+*/
 module MainControl (Op,Control); 
   input [5:0] Op;
   output reg [4:0] Control;
