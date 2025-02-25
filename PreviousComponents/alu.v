@@ -70,13 +70,26 @@ module bit_alu_carry(A, B, L, CI, OP, R, CO);
     full_adder fa1 (a_mux_out, b_mux_out, CI, a_b_add, CO);
 
     // Multiplexer
-    multiplexer_4x1 m3 (a_b_and, a_b_or, a_b_add, L, OP[0], OP[1], R1);
+    multiplexer_4x1 m3 (a_b_and, a_b_or, a_b_add, L, OP[0], OP[1], R);
 
     // NAND
+    /*
     and a2 (NA, OP[0], OP[3]);
     not n3 (N1, a_b_and);
     multiplexer_2x1 m4 (R1, N1, NA, R);
+    */
 endmodule
+
+/*
+Good design and detailed and accurate logic diagrams of all modules. 
+The basic operations and the additional NOR operation are implemented correctly.
+ NAND is incorrectly designed and does not work properly (as the last test case shows). 
+ The additional logic that takes R1 and outputs R is incorrect and not needed. 
+ The direct output from the 4x1 mux works fine for NAND, just like for NOR. OR-ing
+ the inverted A and B is equivalent to A NAND B, no need of any additional logic. 
+ The basic operations are tested accordingly. The NOR operaion works, 
+ but it's not tested (opcode 1000 is used, instead of 1100). 
+*/
 
 module bit_alu_set(A, B, L, CI, OP, R, S, O);
     // A, B, Less, Carry in, Operation, Result, Set, Overflow
@@ -102,13 +115,15 @@ module bit_alu_set(A, B, L, CI, OP, R, S, O);
     assign S = a_b_add;
 
     // Multiplexer
-    multiplexer_4x1 m3 (a_b_and, a_b_or, a_b_add, L, OP[0], OP[1], R1);
+    multiplexer_4x1 m3 (a_b_and, a_b_or, a_b_add, L, OP[0], OP[1], R);
     
     // NAND
+    /*
     and a2 (NA, OP[0], OP[3]);
     not n3 (N1, a_b_and);
     multiplexer_2x1 m4 (R1, N1, NA, R);
-    
+    */
+
     // Overflow
     xor x1 (O1, CI, CO);
     and a3 (O, O1, OP[1]);
@@ -159,7 +174,7 @@ module testALU;
 	    #1 op = 4'b0111; a = 4'b0101; b = 4'b0001;  // SLT
 	    #1 op = 4'b0111; a = 4'b0001; b = 4'b0011;  // SLT
 	    #1 op = 4'b0111; a = 4'b1101; b = 4'b0110;  // SLT overflow (-3-6=7 => SLT=0)
-        #1 op = 4'b1000; a = 4'b0101; b = 4'b0001;  // NOR
+        #1 op = 4'b1100; a = 4'b0101; b = 4'b0001;  // NOR
         #1 op = 4'b1101; a = 4'b0101; b = 4'b0001;  // NAND
     end
 endmodule
