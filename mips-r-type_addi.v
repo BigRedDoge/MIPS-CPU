@@ -90,8 +90,8 @@ module CPU (clock,PC,ALUOut,IR);
     //THE FOLLOWING ADDI and AND COMMANDS ARE EXAMPLES
     //                 op rs rt    value
     IMemory[0] = 16'b0111_00_01_00001111;  // addi $t1, $0,  15   ($t1=15)
-    //                 op rs rt rd empty
-    IMemory[2] = 16'b0000_01_10_11_00000;  // and  $t3, $t1, $t2  ($t3=7)
+    //                 op rs rt rd   empty
+    IMemory[2] = 16'b0000_01_10_11_0000000;  // and  $3, $1, $2  ($t3=7)
     
     IMemory[1] = 32'h200a0007;  // addi $t2, $0,  7    ($t2=7)
     IMemory[3] = 32'h012b5022;  // sub  $t2, $t1, $t3  ($t2=8)
