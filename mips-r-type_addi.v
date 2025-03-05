@@ -110,7 +110,7 @@ module CPU (clock,PC,ALUOut,IR);
     //                 op rs rt    value
     IMemory[0] = 16'b0111_00_01_00001111;  // addi $t1, $0,  15   ($t1=15)
     //                 op rs rt rd empty
-    IMemory[2] = 16'b0010_01_10_11_000000;  // and  $t3, $t1, $t2  ($t3=7)
+    IMemory[2] = 16'b0000_01_10_11_0000000;  // and  $3, $1, $2  ($t3=7)
     // 32'h200a0007
     IMemory[1] = 16'b0111_00_10_00000111;  // addi $t2, $0,  7    ($t2=7)
     // 32'h012b5022
