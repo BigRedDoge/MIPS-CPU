@@ -76,6 +76,25 @@ endmodule
 //   endcase
 // endmodule
 
+
+module multiplexer_2x1 (X, Y, Z, out);
+    input X, Y, Z;
+    output out;
+    wire c1, c2;
+    wire not_z;
+
+    // NOT gate
+    not n1 (not_z, Z);
+
+    // AND gates
+    and a1 (c1, X, not_z);
+    and a2 (c2, Y, Z);
+
+    // OR gate
+    or o1 (out, c1, c2);
+endmodule
+
+
 module CPU (clock,PC,ALUOut,IR);
   input clock;
   output [15:0] ALUOut,IR,PC;
@@ -91,30 +110,55 @@ module CPU (clock,PC,ALUOut,IR);
     //                 op rs rt    value
     IMemory[0] = 16'b0111_00_01_00001111;  // addi $t1, $0,  15   ($t1=15)
     //                 op rs rt rd empty
-    IMemory[2] = 16'b0000_01_10_11_00000;  // and  $t3, $t1, $t2  ($t3=7)
-    
-    IMemory[1] = 32'h200a0007;  // addi $t2, $0,  7    ($t2=7)
-    IMemory[3] = 32'h012b5022;  // sub  $t2, $t1, $t3  ($t2=8)
-    IMemory[4] = 32'h014b5025;  // or   $t2, $t2, $t3  ($t2=15)
-    IMemory[5] = 32'h014b5820;  // add  $t3, $t2, $t3  ($t3=22)
-    IMemory[6] = 32'h014b4827;  // nor  $t1, $t2, $t3  ($t1=-32)
-    IMemory[7] = 32'h016a482a;  // slt  $t1, $t3, $t2  ($t1=0)
-    IMemory[8] = 32'h014b482a;  // slt  $t1, $t2, $t3  ($t1=1)
+    IMemory[2] = 16'b0010_01_10_11_000000;  // and  $t3, $t1, $t2  ($t3=7)
+    // 32'h200a0007
+    IMemory[1] = 16'b0111_00_10_00000111;  // addi $t2, $0,  7    ($t2=7)
+    // 32'h012b5022
+    IMemory[3] = 16'b0001_01_11_10_000000;  // sub  $t2, $t1, $t3  ($t2=8)
+    // 32'h014b5025
+    IMemory[4] = 16'b0011_10_11_10_000000;  // or   $t2, $t2, $t3  ($t2=15)
+    // 32'h014b5820
+    IMemory[5] = 16'b0000_10_11_11_000000;  // add  $t3, $t2, $t3  ($t3=22)
+    // 32'h014b4827
+    IMemory[6] = 16'b0100_10_11_01_000000;  // nor  $t1, $t2, $t3  ($t1=-32)
+    // 32'h016a482a
+    IMemory[7] = 16'b0110_11_10_01_000000;  // slt  $t1, $t3, $t2  ($t1=0)
+    // 32'h014b482a
+    IMemory[8] = 16'b0110_10_11_01_000000;  // slt  $t1, $t2, $t3  ($t1=1)
   end
   initial PC = 0;
   assign IR = IMemory[PC>>1];
 
   //THESE MULTIPLEXERS NEEDS TO BE GATELEVEL
-
-  assign WR = (RegDst) ? IR[7:6]: IR[9:8]; // RegDst Mux
+  //assign WR = (RegDst) ? IR[7:6]: IR[9:8]; // RegDst Mux
   //THIS IS 2 INSTANCES of 2x1 MULTIPLEXER
-  assign B  = (ALUSrc) ? SignExtend: RD2; // ALUSrc Mux 
+  
+  multiplexer_2x1 muxIR1 (IR[9], IR[7], RegDst, WR[1]);
+  multiplexer_2x1 muxIR2 (IR[8], IR[6], RegDst, WR[0]);
+  
   //THS IS 16 INSTANCES of 2x1 MULTIPLEXER FOR 16 BITS SIGN EXTENSION
-
-
+  //assign B  = (ALUSrc) ? SignExtend: RD2; // ALUSrc Mux 
+  
+  multiplexer_2x1 mux0 (RD2[0], SignExtend[0], ALUSrc, B[0]);
+  multiplexer_2x1 mux1 (RD2[1], SignExtend[1], ALUSrc, B[1]);
+  multiplexer_2x1 mux2 (RD2[2], SignExtend[2], ALUSrc, B[2]);
+  multiplexer_2x1 mux3 (RD2[3], SignExtend[3], ALUSrc, B[3]);
+  multiplexer_2x1 mux4 (RD2[4], SignExtend[4], ALUSrc, B[4]);
+  multiplexer_2x1 mux5 (RD2[5], SignExtend[5], ALUSrc, B[5]);
+  multiplexer_2x1 mux6 (RD2[6], SignExtend[6], ALUSrc, B[6]);
+  multiplexer_2x1 mux7 (RD2[7], SignExtend[7], ALUSrc, B[7]);
+  multiplexer_2x1 mux8 (RD2[8], SignExtend[8], ALUSrc, B[8]);
+  multiplexer_2x1 mux9 (RD2[9], SignExtend[9], ALUSrc, B[9]);
+  multiplexer_2x1 mux10 (RD2[10], SignExtend[10], ALUSrc, B[10]);
+  multiplexer_2x1 mux11 (RD2[11], SignExtend[11], ALUSrc, B[11]);
+  multiplexer_2x1 mux12 (RD2[12], SignExtend[12], ALUSrc, B[12]);
+  multiplexer_2x1 mux13 (RD2[13], SignExtend[13], ALUSrc, B[13]);
+  multiplexer_2x1 mux14 (RD2[14], SignExtend[14], ALUSrc, B[14]);
+  multiplexer_2x1 mux15 (RD2[15], SignExtend[15], ALUSrc, B[15]);
+  
   assign SignExtend = {{8{IR[7]}},IR[7:0]}; // sign extension unit
   reg_file rf (IR[11:10],IR[9:8],WR,ALUOut,RegWrite,A,RD2,clock);
-  alu fetch (4'b0010,PC,2,NextPC,Unused);
+  alu fetch (4'b0010,PC,16'd2,NextPC,Unused);
   alu ex (ALUctl, A, B, ALUOut, Zero);
   MainControl MainCtr (IR[15:12],{RegDst,ALUSrc,RegWrite,ALUctl}); 
   //ALUControl ALUCtrl(ALUOp, IR[5:0], ALUctl); // ALUControl is not needed, we just use the op
