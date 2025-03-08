@@ -248,8 +248,8 @@ module test ();
     CPU test_cpu(clock,PC,WD,IR); 
     always #1 clock = ~clock; 
     initial begin 
-    $display ("Clock PC IR WD"); 
-    $monitor ("%b %2d %b %3d (%b)",clock,PC,IR,WD,WD); 
+    $display ("Clock PC   IR                                 WD");
+     $monitor ("%b     %2d   %b  %3d (%b)",clock,PC,IR,WD,WD);
     clock = 1; 
     #16 $finish; 
     end 
