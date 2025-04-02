@@ -95,6 +95,7 @@ module CPU (clock,WD,IR,PC);
     IMemory[1] = 32'h8c0a0004;  // lw $2, 2($0)
     IMemory[2] = 32'h012a582a;  // slt $t3, $1, $2
     IMemory[3] = 32'h11600002;  // beq $3, $0, IMemory[6] to test, include bne instead of beq, the result will instead be -2
+    //IMemory [6] will cause IM[4] and IM[5] to be skipped, offset is in the IR[7:0], and will remain 2 bits
     IMemory[4] = 32'hac090004;  // sw $1, 2($0) 
     IMemory[5] = 32'hac0a0000;  // sw $2, 0($0) 
     IMemory[6] = 32'h8c090000;  // lw $1, 0($0) 
