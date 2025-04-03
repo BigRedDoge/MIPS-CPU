@@ -355,8 +355,7 @@ module CPU (clock,WD,IR,PC);
   branchmux nextpcout(Bne,Beq,Zero,Target,PCplus4,NextPC);
   always @(negedge clock) begin
     PC <= NextPC;
-    // ** does this need to be >>1? **
-    if (MemWrite) DMemory[ALUOut>>2] <= RD2;
+    if (MemWrite) DMemory[ALUOut>>1] <= RD2;
   end
 endmodule
 
