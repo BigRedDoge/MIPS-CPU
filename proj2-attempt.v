@@ -1,28 +1,3 @@
-//taking the behavioral model of the CPU and adding the changed necessary for 
-//second deliverable (branching and immediate instructions)
-
-//obviously change everything from 32 bits to 16 bits, did in a few places but not all
-
-
-
-
-// Behavioral model of MIPS - single cycle implementation
-/*
-module reg_file (RR1,RR2,WR,WD,RegWrite,RD1,RD2,clock); //this is fine from proj1
-  input [4:0] RR1,RR2,WR;
-  input [31:0] WD;
-  input RegWrite,clock;
-  output [31:0] RD1,RD2;
-  reg [31:0] Regs[0:31];
-  assign RD1 = Regs[RR1];
-  assign RD2 = Regs[RR2];
-  initial Regs[0] = 0;
-  always @(negedge clock)
-    if (RegWrite==1 & WR!=0) 
-	Regs[WR] <= WD;
-endmodule
-*/
-
 // Behavioral model of a 16-bit MIPS single-cycle CPU, supporting R-type and immediate arithmetic.
 module reg_file (RR1, RR2, WR, WD, RegWrite, RD1, RD2, clock);
     input [1:0] RR1, RR2, WR; // Read register 1, Read register 2, Write register
@@ -158,24 +133,6 @@ module alu (op, a, b, ALUout, zero);
     nor nor1(zero, ALUout[0],ALUout[1],ALUout[2],ALUout[3]); 
 endmodule 
 
-// module alu (ALUctl,A,B,ALUOut,Zero); //this is fine from proj2
-//   input [3:0] ALUctl;
-//   input [15:0] A,B;
-//   output reg [15:0] ALUOut;
-//   output Zero, Overflow;
-//   always @(ALUctl, A, B) // reevaluate if these change
-//     case (ALUctl)
-//       4'b0000: ALUOut <= A & B;
-//       4'b0001: ALUOut <= A | B;
-//       4'b0010: ALUOut <= A + B;
-//       4'b0110: ALUOut <= A - B;
-//       4'b0111: ALUOut <= A < B ? 1:0;
-//       4'b1100: ALUOut <= ~A & ~B;
-//       4'b1101: ALUOut <= ~A | ~B;
-//     endcase
-//   assign Zero = (ALUOut==0); // Zero is true if ALUOut is 0
-// endmodule
-
 module MainControl (Op,Control); 
   input [3:0] Op; //change this from 6 to 4 bits
   output reg [10:0] Control; //change this from 8 to 11 bits
@@ -200,27 +157,6 @@ module MainControl (Op,Control);
 
   endcase
 endmodule
-
-//ALUControl NOT NEEDED
-
-
-// module ALUControl (ALUOp,FuncCode,ALUCtl); 
-//   input [1:0] ALUOp;
-//   input [5:0] FuncCode;
-//   output reg [3:0] ALUCtl;
-//   always @(ALUOp,FuncCode) case (ALUOp)
-//     2'b00: ALUCtl <= 4'b0010; // add
-//     2'b01: ALUCtl <= 4'b0110; // subtract
-//     2'b10: case (FuncCode)
-// 	     32: ALUCtl <= 4'b0010; // add
-// 	     34: ALUCtl <= 4'b0110; // sub
-// 	     36: ALUCtl <= 4'b0000; // and
-// 	     37: ALUCtl <= 4'b0001; // or
-// 	     39: ALUCtl <= 4'b1100; // nor
-// 	     42: ALUCtl <= 4'b0111; // slt
-//     endcase
-//   endcase
-// endmodule
 
 // Selects between two 2-bit inputs (I0 and I1) based on control signal Sel. 
 module doublemux2x1 (I0,I1,Sel,Out); 
@@ -307,8 +243,8 @@ module CPU (clock,WD,IR,PC);
     
     //IMemory [6] will cause IM[4] and IM[5] to be skipped, offset is in the IR[7:0], and will remain 2 bits
 
-    //IMemory[3] = 16'b1010_11_00_00000010;  // beq $3, $0, IMemory[6] 
-        IMemory[3] = 16'b1011_11_00_00000010;  // bne $3, $0, IMemory[6]
+    IMemory[3] = 16'b1010_11_00_00000010;  // beq $3, $0, IMemory[6] 
+    //    IMemory[3] = 16'b1011_11_00_00000010;  // bne $3, $0, IMemory[6]
     //IMemory[4] = 32'hac090004;  // sw $1, 2($0) 
     IMemory[4] = 16'b1001_00_01_00000010;  // sw $1, 2($0) 
     //IMemory[5] = 32'hac0a0000;  // sw $2, 0($0) 
@@ -355,8 +291,8 @@ module CPU (clock,WD,IR,PC);
   branchmux nextpcout(Bne,Beq,Zero,Target,PCplus4,NextPC);
   always @(negedge clock) begin
     PC <= NextPC;
-    // ** does this need to be >>1? **
-    if (MemWrite) DMemory[ALUOut>>2] <= RD2;
+    //switch ALUOut to shift from 2->1
+    if (MemWrite) DMemory[ALUOut>>1] <= RD2;
   end
 endmodule
 
