@@ -150,7 +150,7 @@ module MainControl (Op, Control);
 endmodule
 
 // Selects between two 2-bit inputs (I0 and I1) based on control signal Sel. 
-module doublemux2x1 (I0,I1,Sel,Out); 
+module mux2bit2x1 (I0,I1,Sel,Out); 
     input [1:0] I0,I1; 
     input Sel; 
     output [1:0] Out; 
@@ -167,7 +167,7 @@ module doublemux2x1 (I0,I1,Sel,Out);
 endmodule 
 
 // Selects between two 16-bit inputs (I0 and I1) based on control signal Sel. 
-module sexdecuplexmux2x1 (I0,I1,Sel,Out); 
+module mux16bit2x1 (I0,I1,Sel,Out); 
     input [15:0] I0,I1; 
     input Sel; 
     output [15:0] Out;
@@ -208,7 +208,7 @@ module branchmux(Bne,Beq,Zero,Target,PCplus4,NextPC);
     wire Out;
     
     mux2x1 branch(Bne,Beq,Zero,Out);
-    sexdecuplexmux2x1 nextpc(PCplus4,Target,Out,NextPC);
+    mux16bit2x1 nextpc(PCplus4,Target,Out,NextPC);
 endmodule
 
 module CPU (clock, PC, IFID_IR, IDEX_IR, WD);
@@ -276,12 +276,12 @@ module CPU (clock, PC, IFID_IR, IDEX_IR, WD);
   wire [15:0] B, ALUOut;
   wire [3:0] ALUctl;
   alu ex (IDEX_ALUOp, IDEX_RD1, B, ALUOut, Zero);
-  sexdecuplexmux2x1 ALUCtrl (IDEX_RD2, IDEX_SignExt, IDEX_ALUSrc, B);
-  doublemux2x1 wrmux (IDEX_rd, IDEX_rt, IDEX_RegDst, WR);
+  mux16bit2x1 ALUCtrl (IDEX_RD2, IDEX_SignExt, IDEX_ALUSrc, B);
+  mux2bit2x1 wrmux (IDEX_rd, IDEX_rt, IDEX_RegDst, WR);
   assign WD = ALUOut;
 
   // Forwarding multiplexers
-  sexdecuplexmux2x1 fwd1 (RD1 ,ALUOut, IDEX_RegWrite && WR==IFID_IR[11:10], FWD_RD1),
+  mux16bit2x1 fwd1 (RD1 ,ALUOut, IDEX_RegWrite && WR==IFID_IR[11:10], FWD_RD1),
                     fwd2 (RD2, ALUOut, IDEX_RegWrite && WR==IFID_IR[9:8], FWD_RD2);
 
   initial begin
