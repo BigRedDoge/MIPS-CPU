@@ -3,8 +3,8 @@
 // FOR THE FINAL SUBMISSION:
 // PROVIDE TEST CASES USING:
 // NOPS, NO NOPS
-// BEQ, BNE
-// SWAP MEMORY CELLS
+// BEQ, BNE BY SWAPPING MEMORY CELLS
+
 
 module reg_file (RR1,RR2,WR,WD,RegWrite,RD1,RD2,clock);
   input [4:0] RR1,RR2,WR;
@@ -39,36 +39,49 @@ module alu (ALUctl,A,B,ALUOut,Zero);
   assign Zero = (ALUOut==0); // Zero is true if ALUOut is 0
 endmodule
 
+
+//use the control from project 2 here, but you need to change the index of the inputs (RegDst -> IDEX_RegDst, etc.)
+
 module MainControl (Op,Control); 
-  input [5:0] Op;
-  output reg [7:0] Control;
-// IDEX_RegDst,IDEX_ALUSrc,IDEX_MemtoReg,IDEX_RegWrite,IDEX_MemWrite,IDEX_Branch,IDEX_ALUOp
+  input [3:0] Op;
+  output reg [10:0] Control;
+// IDEX_RegDst,IDEX_ALUSrc,IDEX_MemtoReg,IDEX_RegWrite,IDEX_MemWrite,IDEX_Beq,IDEX_Bne,IDEX_ALUCtl
+
+  //no changes from proj 2 on this (already changed)
   always @(Op) case (Op)
-    6'b000000: Control <= 8'b10010010; // Rtype
-    6'b100011: Control <= 8'b01110000; // LW    
-    6'b101011: Control <= 8'b01001000; // SW    
-    6'b000100: Control <= 8'b00000101; // BEQ   
-    6'b001000: Control <= 8'b01010100; // ADDI
+    4'b0000: Control <= 11'b10010_0_0_0010; // ADD
+    4'b0001: Control <= 11'b10010_0_0_0110; // SUB
+    4'b0010: Control <= 11'b10010_0_0_0000; // AND
+    4'b0011: Control <= 11'b10010_0_0_0001; // OR
+    4'b0100: Control <= 11'b10010_0_0_1100; // NOR
+    4'b0101: Control <= 11'b10010_0_0_1101; // NAND
+    4'b0110: Control <= 11'b10010_0_0_0111; // SLT
+    
+    4'b0111: Control <= 11'b01010_0_0_0010; // ADDI
+    4'b1000: Control <= 11'b01110_0_0_0010; // LW    
+    4'b1001: Control <= 11'b01001_0_0_0010; // SW    
+    4'b1010: Control <= 11'b00000_1_0_0110; // BEQ   
+    4'b1011: Control <= 11'b00000_0_1_0110; // BNE
   endcase
 endmodule
 
-module ALUControl (ALUOp,FuncCode,ALUCtl); 
-  input [1:0] ALUOp;
-  input [5:0] FuncCode;
-  output reg [3:0] ALUCtl;
-  always @(ALUOp,FuncCode) case (ALUOp)
-    2'b00: ALUCtl <= 4'b0010; // add
-    2'b01: ALUCtl <= 4'b0110; // subtract
-    2'b10: case (FuncCode)
-	     32: ALUCtl <= 4'b0010; // add
-	     34: ALUCtl <= 4'b0110; // sub
-	     36: ALUCtl <= 4'b0000; // and
-	     37: ALUCtl <= 4'b0001; // or
-	     39: ALUCtl <= 4'b1100; // nor
-	     42: ALUCtl <= 4'b0111; // slt
-    endcase
-  endcase
-endmodule
+// module ALUControl (ALUOp,FuncCode,ALUCtl); 
+//   input [1:0] ALUOp;
+//   input [5:0] FuncCode;
+//   output reg [3:0] ALUCtl;
+//   always @(ALUOp,FuncCode) case (ALUOp)
+//     2'b00: ALUCtl <= 4'b0010; // add
+//     2'b01: ALUCtl <= 4'b0110; // subtract
+//     2'b10: case (FuncCode)
+// 	     32: ALUCtl <= 4'b0010; // add
+// 	     34: ALUCtl <= 4'b0110; // sub
+// 	     36: ALUCtl <= 4'b0000; // and
+// 	     37: ALUCtl <= 4'b0001; // or
+// 	     39: ALUCtl <= 4'b1100; // nor
+// 	     42: ALUCtl <= 4'b0111; // slt
+//     endcase
+//   endcase
+// endmodule
 
 module CPU (clock,PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD);
   input clock;
@@ -76,6 +89,8 @@ module CPU (clock,PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD);
 
   initial begin 
 // Program: swap memory cells (if needed) and compute absolute value |5-7|=2
+
+    //this will be the same instruction set from proj2, just insert the nops
    IMemory[0] = 32'h8c090000;  // lw $t1, 0($0)
    IMemory[1] = 32'h8c0a0004;  // lw $t2, 4($0)
    IMemory[2] = 32'h00000000;  // nop
@@ -116,24 +131,35 @@ module CPU (clock,PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD);
 
 // Pipeline 
 // IF 
+
+    //change the pc incrementing to 16 bit obviously
    wire [31:0] PCplus4, NextPC;
    reg[31:0] PC, IMemory[0:1023], IFID_IR, IFID_PCplus4;
    alu fetch (4'b0010,PC,4,PCplus4,Unused1);
-   assign NextPC = (EXMEM_Branch && EXMEM_Zero) ? EXMEM_Target: PCplus4;
+
+    //here, you must put the branch control unit and the multiplexer, so that NextPC operates correctly (this is in proj2)
+
+    //these will be the inputs and the logic of the branch control unit: EXMEM_Beq && EXMEM_Zero||EXMEM_Bne && ~EXMEM_Zero
+
+   assign NextPC = (EXMEM_Beq && EXMEM_Zero||EXMEM_Bne && ~EXMEM_Zero) ? EXMEM_Target: PCplus4;
+
+
+
+
 // ID
    wire [7:0] Control;
    reg IDEX_RegWrite,IDEX_MemtoReg,
-       IDEX_Branch,  IDEX_MemWrite,
+       IDEX_Beq, IDEX_Bne,  IDEX_MemWrite,
        IDEX_ALUSrc,  IDEX_RegDst;
-   reg [1:0]  IDEX_ALUOp;
+   reg [3:0]  IDEX_ALUCtl; //this is correctly changed
    wire [31:0] RD1,RD2,SignExtend, WD;
    reg [31:0] IDEX_PCplus4,IDEX_RD1,IDEX_RD2,IDEX_SignExt,IDEXE_IR;
    reg [31:0] IDEX_IR; // For monitoring the pipeline
-   reg [4:0]  IDEX_rt,IDEX_rd;
+   reg [1:0]  IDEX_rt,IDEX_rd; //this is correctly changed
    reg MEMWB_RegWrite; // part of MEM stage, but declared here before use (to avoid error)
    reg [4:0] MEMWB_rd; // part of MEM stage, but declared here before use (to avoid error)
    reg_file rf (IFID_IR[25:21],IFID_IR[20:16],MEMWB_rd,WD,MEMWB_RegWrite,RD1,RD2,clock);
-   MainControl MainCtr (IFID_IR[31:26],Control); 
+   MainControl MainCtr (IFID_IR[15:12],Control);  //this is correctly changed
    assign SignExtend = {{16{IFID_IR[15]}},IFID_IR[15:0]}; 
 // EXE
    reg EXMEM_RegWrite,EXMEM_MemtoReg,
@@ -142,13 +168,13 @@ module CPU (clock,PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD);
    reg EXMEM_Zero;
    reg [31:0] EXMEM_Target,EXMEM_ALUOut,EXMEM_RD2;
    reg [31:0] EXMEM_IR; // For monitoring the pipeline
-   reg [4:0] EXMEM_rd;
+   reg [1:0] EXMEM_rd; //this is correctly changed
    wire [31:0] B,ALUOut;
    wire [3:0] ALUctl;
-   wire [4:0] WR;
+   wire [1:0] WR; //this is correctly changed
    alu branch (4'b0010,IDEX_SignExt<<2,IDEX_PCplus4,Target,Unused2);
-   alu ex (ALUctl, IDEX_RD1, B, ALUOut, Zero);
-   ALUControl ALUCtrl(IDEX_ALUOp, IDEX_SignExt[5:0], ALUctl); // ALU control unit
+   alu ex (IDEX_ALUctl, IDEX_RD1, B, ALUOut, Zero); //changed correctly
+//    ALUControl ALUCtrl(IDEX_ALUOp, IDEX_SignExt[5:0], ALUctl); // ALU control unit
    assign B  = (IDEX_ALUSrc) ? IDEX_SignExt: IDEX_RD2;        // ALUSrc Mux 
    assign WR = (IDEX_RegDst) ? IDEX_rd: IDEX_rt;              // RegDst Mux
 // MEM
@@ -164,9 +190,9 @@ module CPU (clock,PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD);
    initial begin
     PC = 0;
 // Initialize pipeline registers
-    IDEX_RegWrite=0;IDEX_MemtoReg=0;IDEX_Branch=0;IDEX_MemWrite=0;IDEX_ALUSrc=0;IDEX_RegDst=0;IDEX_ALUOp=0;
+    IDEX_RegWrite=0;IDEX_MemtoReg=0;IDEX_Bne=0; IDEX_Beq=0;IDEX_MemWrite=0;IDEX_ALUSrc=0;IDEX_RegDst=0;IDEX_ALUOp=0;
     IFID_IR=0;
-    EXMEM_RegWrite=0;EXMEM_MemtoReg=0;EXMEM_Branch=0;EXMEM_MemWrite=0;
+    EXMEM_RegWrite=0;EXMEM_MemtoReg=0;EXMEM_Bne=0;EXMEM_Beq=0;EXMEM_MemWrite=0;
     EXMEM_Target=0;
     MEMWB_RegWrite=0;MEMWB_MemtoReg=0;
    end
@@ -178,8 +204,9 @@ module CPU (clock,PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD);
     IFID_PCplus4 <= PCplus4;
     IFID_IR <= IMemory[PC>>2];
 // ID
+
     IDEX_IR <= IFID_IR; // For monitoring the pipeline
-    {IDEX_RegDst,IDEX_ALUSrc,IDEX_MemtoReg,IDEX_RegWrite,IDEX_MemWrite,IDEX_Branch,IDEX_ALUOp} <= Control;   
+    {IDEX_RegDst,IDEX_ALUSrc,IDEX_MemtoReg,IDEX_RegWrite,IDEX_MemWrite,IDEX_Beq,IDEX_Bne,IDEX_ALUCtl} <= Control;   
     IDEX_PCplus4 <= IFID_PCplus4;
     IDEX_RD1 <= RD1; 
     IDEX_RD2 <= RD2;
@@ -190,7 +217,8 @@ module CPU (clock,PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD);
     EXMEM_IR <= IDEX_IR; // For monitoring the pipeline
     EXMEM_RegWrite <= IDEX_RegWrite;
     EXMEM_MemtoReg <= IDEX_MemtoReg;
-    EXMEM_Branch   <= IDEX_Branch;
+    EXMEM_Beq   <= IDEX_Beq;
+    EXMEM_Bne   <= IDEX_Bne;
     EXMEM_MemWrite <= IDEX_MemWrite;
     EXMEM_Target <= Target;
     EXMEM_Zero <= Zero;
@@ -222,6 +250,8 @@ module test ();
     #69 $finish;
   end
 endmodule
+
+//PRINT THESE RESULTS IN BINARY NOT HEX
 
 /* Output:
 PC   IFID_IR  IDEX_IR  EXMEM_IR MEMWB_IR  WD
