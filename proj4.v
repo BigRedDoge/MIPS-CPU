@@ -186,25 +186,21 @@ module MainControl (Op,Control);
 
   //no changes from proj 2 on this (already changed)
   always @(Op) case (Op)
-    4'b0000: Control <= 11'b10010_0_0_0010; // ADD
-    4'b0001: Control <= 11'b10010_0_0_0110; // SUB
-    4'b0010: Control <= 11'b10010_0_0_0000; // AND
-    4'b0011: Control <= 11'b10010_0_0_0001; // OR
-    4'b0100: Control <= 11'b10010_0_0_1100; // NOR
-    4'b0101: Control <= 11'b10010_0_0_1101; // NAND
-    4'b0110: Control <= 11'b10010_0_0_0111; // SLT
-    
-    4'b0111: Control <= 11'b01010_0_0_0010; // ADDI
-    4'b1000: Control <= 11'b01110_0_0_0010; // LW    
-    4'b1001: Control <= 11'b01001_0_0_0010; // SW    
-    4'b1010: Control <= 11'b00000_1_0_0110; // BEQ   
-    4'b1011: Control <= 11'b00000_0_1_0110; // BNE
+        4'b0000: Control <= 11'b10010_0_0_0010; // ADD
+        4'b0001: Control <= 11'b10010_0_0_0110; // SUB
+        4'b0010: Control <= 11'b10010_0_0_0000; // AND
+        4'b0011: Control <= 11'b10010_0_0_0001; // OR
+        4'b0100: Control <= 11'b10010_0_0_1100; // NOR
+        4'b0101: Control <= 11'b10010_0_0_1101; // NAND
+        4'b0110: Control <= 11'b10010_0_0_0111; // SLT
+
+        4'b0111: Control <= 11'b01010_0_0_0010; // ADDI
+        4'b1000: Control <= 11'b01110_0_0_0010; // LW    
+        4'b1001: Control <= 11'b01001_0_0_0010; // SW    
+        4'b1010: Control <= 11'b00000_1_0_0110; // BEQ   
+        4'b1011: Control <= 11'b00000_0_1_0110; // BNE
   endcase
 endmodule
-
-
-
-
 
 module branchmux(Bne,Beq,Zero,Target,PCplus4,NextPC);
     input Beq,Bne,Zero;
@@ -220,67 +216,65 @@ module CPU (clock,PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD);
   input clock;
   output [15:0] PC,IFID_IR,IDEX_IR,EXMEM_IR,MEMWB_IR,WD;
 
+  initial begin 
 // Program: swap memory cells (if needed) and compute absolute value |5-7|=2
-
-    //this will be the same instruction set from proj2, just insert the nops
+  IMemory[0] = 16'b1000_00_01_00000000;  // lw $t1, 0($0) 
+  IMemory[1] = 16'b1000_00_10_00000010;  // lw $t2, 4($0)
+  IMemory[2] = 16'b0000000000000000;     // nop
+  IMemory[3] = 16'b0000000000000000;     // nop
+  IMemory[4] = 16'b0000000000000000;     // nop
+  IMemory[5] = 16'b0110_01_10_11_000000; // slt $t3, $t1, $t2
+  IMemory[6] = 16'b0000000000000000;     // nop
+  IMemory[7] = 16'b0000000000000000;     // nop
+  IMemory[8] = 16'b0000000000000000;    // nop
+  IMemory[9] = 16'b1011_11_00_00000101;  // bne $t3, $0, IMemory[6]
+  //IMemory[9] = 16'b1010_11_00_00000101;  // beq $t3, $0, IMemory[6]
+  IMemory[10]= 16'b0000000000000000;    // nop
+  IMemory[11]= 16'b0000000000000000;    // nop
+  IMemory[12]= 16'b0000000000000000;    // nop
+  IMemory[13]= 16'b1001_00_01_00000010;  // sw $t1, 4($0) 
+  IMemory[14]= 16'b1001_00_10_00000000;  // sw $t2, 0($0)
+  IMemory[15]= 16'b0000000000000000;    // nop
+  IMemory[16]= 16'b0000000000000000;     // nop
+  IMemory[17]= 16'b0000000000000000;     // nop
+  IMemory[18]= 16'b1000_00_01_00000000;  // lw $t1, 0($0) 
+  IMemory[19]= 16'b1000_00_10_00000010;  // lw $t2, 4($0)
+  IMemory[20]= 16'b0000000000000000;     // nop
+  IMemory[21]= 16'b0000000000000000;     // nop
+  IMemory[22]= 16'b0000000000000000;     // nop
+  IMemory[23]= 16'b0100_10_10_10_000000; // nor $t2, $t2, $t2 (sub $3, $1, $2 in two's complement)
+  IMemory[24]= 16'b0000000000000000;     // nop
+  IMemory[25]= 16'b0000000000000000;     // nop
+  IMemory[26]= 16'b0000000000000000;     // nop
+  IMemory[27]= 16'b0111_10_10_00000001;  // addi $t2, $t2, 1 
+  IMemory[28]= 16'b0000000000000000;     // nop
+  IMemory[29]= 16'b0000000000000000;     // nop
+  IMemory[30]= 16'b0000000000000000;     // nop
+  IMemory[31]= 16'b0000_01_10_11_000000; // add $t3, $t1, $t2 
+// Data
+  DMemory[1] = 16'd5; // switch the cells and see how the simulation output changes
+  DMemory[0] = 16'd7; // (beq is taken if DMemory[0]=7; DMemory[1]=5, not taken otherwise)
+  end
+  
 //   initial begin 
 // // Program: swap memory cells (if needed) and compute absolute value |5-7|=2
 //   IMemory[0] = 16'b1000_00_01_00000000;  // lw $t1, 0($0) 
 //   IMemory[1] = 16'b1000_00_10_00000010;  // lw $t2, 4($0)
-//   IMemory[2] = 16'b0000000000000000;     // nop
-//   IMemory[3] = 16'b0000000000000000;     // nop
-//   IMemory[4] = 16'b0000000000000000;     // nop
 //   IMemory[5] = 16'b0110_01_10_11_000000; // slt $t3, $t1, $t2
-//   IMemory[6] = 16'b0000000000000000;     // nop
-//   IMemory[7] = 16'b0000000000000000;     // nop
-//   IMemory[8] = 16'b0000000000000000;    // nop
 //   IMemory[9] = 16'b1011_11_00_00000101;  // bne $t3, $0, IMemory[6]
-//   //IMemory[9] = 16'b1010_11_00_00000101;  // beq $t3, $0, IMemory[6]
-//   IMemory[10]= 16'b0000000000000000;    // nop
-//   IMemory[11]= 16'b0000000000000000;    // nop
-//   IMemory[12]= 16'b0000000000000000;    // nop
+//   IMemory[9] = 16'b1010_11_00_00000101;  // beq $t3, $0, IMemory[6]
 //   IMemory[13]= 16'b1001_00_01_00000010;  // sw $t1, 4($0) 
 //   IMemory[14]= 16'b1001_00_10_00000000;  // sw $t2, 0($0)
-//   IMemory[15]= 16'b0000000000000000;    // nop
-//   IMemory[16]= 16'b0000000000000000;     // nop
-//   IMemory[17]= 16'b0000000000000000;     // nop
 //   IMemory[18]= 16'b1000_00_01_00000000;  // lw $t1, 0($0) 
 //   IMemory[19]= 16'b1000_00_10_00000010;  // lw $t2, 4($0)
-//   IMemory[20]= 16'b0000000000000000;     // nop
-//   IMemory[21]= 16'b0000000000000000;     // nop
-//   IMemory[22]= 16'b0000000000000000;     // nop
 //   IMemory[23]= 16'b0100_10_10_10_000000; // nor $t2, $t2, $t2 (sub $3, $1, $2 in two's complement)
-//   IMemory[24]= 16'b0000000000000000;     // nop
-//   IMemory[25]= 16'b0000000000000000;     // nop
-//   IMemory[26]= 16'b0000000000000000;     // nop
 //   IMemory[27]= 16'b0111_10_10_00000001;  // addi $t2, $t2, 1 
-//   IMemory[28]= 16'b0000000000000000;     // nop
-//   IMemory[29]= 16'b0000000000000000;     // nop
-//   IMemory[30]= 16'b0000000000000000;     // nop
 //   IMemory[31]= 16'b0000_01_10_11_000000; // add $t3, $t1, $t2 
 // // Data
 //   DMemory[0] = 16'd5; // switch the cells and see how the simulation output changes
 //   DMemory[1] = 16'd7; // (beq is taken if DMemory[0]=7; DMemory[1]=5, not taken otherwise)
 //   end
   
-  initial begin 
-// Program: swap memory cells (if needed) and compute absolute value |5-7|=2
-  IMemory[0] = 16'b1000_00_01_00000000;  // lw $t1, 0($0) 
-  IMemory[1] = 16'b1000_00_10_00000010;  // lw $t2, 4($0)
-  IMemory[5] = 16'b0110_01_10_11_000000; // slt $t3, $t1, $t2
-  IMemory[9] = 16'b1011_11_00_00000101;  // bne $t3, $0, IMemory[6]
-  IMemory[9] = 16'b1010_11_00_00000101;  // beq $t3, $0, IMemory[6]
-  IMemory[13]= 16'b1001_00_01_00000010;  // sw $t1, 4($0) 
-  IMemory[14]= 16'b1001_00_10_00000000;  // sw $t2, 0($0)
-  IMemory[18]= 16'b1000_00_01_00000000;  // lw $t1, 0($0) 
-  IMemory[19]= 16'b1000_00_10_00000010;  // lw $t2, 4($0)
-  IMemory[23]= 16'b0100_10_10_10_000000; // nor $t2, $t2, $t2 (sub $3, $1, $2 in two's complement)
-  IMemory[27]= 16'b0111_10_10_00000001;  // addi $t2, $t2, 1 
-  IMemory[31]= 16'b0000_01_10_11_000000; // add $t3, $t1, $t2 
-// Data
-  DMemory[0] = 16'd5; // switch the cells and see how the simulation output changes
-  DMemory[1] = 16'd7; // (beq is taken if DMemory[0]=7; DMemory[1]=5, not taken otherwise)
-  end
 
 // Pipeline 
 // IF 
